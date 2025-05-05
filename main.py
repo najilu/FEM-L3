@@ -47,7 +47,7 @@ for point in mesh.points:
                 eta_list, nu_list, omega_list, gauss_point_list = triangle.gaussPoint()
                 for eta, nu, omega, gauss_point in zip(eta_list, nu_list, omega_list, gauss_point_list):
 
-                    sum += omega*f(gauss_point[0][0], gauss_point[0][1])*fem_utils.phi_ref(triangle, eta, nu,i, mesh)
+                    sum += omega*f(gauss_point[0][0], gauss_point[0][1])*fem_utils.phi_ref(triangle, eta, nu,i)
     B[0][point.get_id()] += sum*abs(triangle.jac())
 
 # Application de la condition de Dirichlet:
