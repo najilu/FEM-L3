@@ -7,20 +7,20 @@ from mesh import Mesh
 from triplets import Triplets
 
 mesh = Mesh()
-# on charge le maillage 2d crée par gmsh
+# Mise en mémoire du maillage 2d crée par gmsh
 mesh.GmshToMesh("square.msh")
 
-#On commence l'algorithme d'assemblage
+# Initialisation l'algorithme d'assemblage
 triplets_A = Triplets()
 
-#on remplie les données de la matrice A en commençant par calculer les éléments de masse élémentaire
+# Remplissage de la matrice A en commençant par calculer les éléments de masse élémentaire
 for triangle in mesh.triangles:
     elementary_mass_matrix = (abs(triangle.area())/12) * np.array([[2,1,1],[1,2,1],[1,1,2]])
     for i in range(3):
         for j in range(3):
             triplets_A.append(triangle.get_boundary(i).get_id(), triangle.get_boundary(j).get_id(), elementary_mass_matrix[i][j])
 
-# puis on calcul les éléments de masse élémentaire pour la matrice de rigidité
+# Calcul des éléments de masse élémentaire pour la matrice de rigidité
 
 for triangle in mesh.triangles:
     x1,y1 = triangle.get_boundary(1).get_coord()
@@ -32,12 +32,12 @@ for triangle in mesh.triangles:
             elementary_rigid_composant= triangle.area() * fem_utils.grad_phi(j).transpose() @ (Bp.transpose() @ Bp) @ fem_utils.grad_phi(i)
             triplets_A.append(triangle.get_boundary(i).get_id(), triangle.get_boundary(j).get_id(), elementary_rigid_composant[0][0])
 
-#on implémente le second membre de l'équation différentielle au dérivée partielles
+# Implémentation du second membre de l'équation différentielle aux dérivées partielles
 def f(x,y):
     A = 1 / (1*np.pi ** 2)
     return A *  np.exp(-((x - 0.5)**2 + (y - 0.5)**2) / 1**2)
 
-# On calcul le second membre du système linéaire
+# Calcul du second membre du système linéaire
 B = np.zeros((144,1)).transpose()
 for point in mesh.points:
     for triangle in mesh.triangles:
@@ -50,7 +50,7 @@ for point in mesh.points:
                     sum += omega*f(gauss_point[0][0], gauss_point[0][1])*fem_utils.phi_ref(triangle, eta, nu,i, mesh)
     B[0][point.get_id()] += sum*abs(triangle.jac())
 
-#application de la condition de Dirichlet:
+# Application de la condition de Dirichlet:
 for segment in mesh.segments:
     if segment.physical_tag == 0:
         id1 = segment.get_boundary(1).get_id()
@@ -63,16 +63,16 @@ for segment in mesh.segments:
         B[0][id1] = 0
         B[0][id2] = 0
 
-# On transforme notre jeu de donnée en une matrice COO pour ensuite pouvoir la convertir en matrice CSR et réaliser les
+# Transformation du jeu de données en une matrice COO pour pouvoir la convertir en matrice CSR et réaliser les
 # calculs.
 A_COO = coo_matrix(triplets_A.getData())
 A_csr = csr_matrix(A_COO)
 
-#calcul et stockage d'une base de l'espace approché
+# Calcul et stockage d'une base de l'espace approché
 phi = [None for i in range(mesh.Npts)]
 node_check = []
 for triangle in mesh.triangles:
-    id1 = triangle.get_boundary(1).get_id()
+    id1 = triangle.gset_boundary(1).get_id()
     id2 = triangle.get_boundary(2).get_id()
     id3 = triangle.get_boundary(3).get_id()
     if id1 not in node_check:
@@ -85,7 +85,7 @@ for triangle in mesh.triangles:
         phi[id3-1] = fem_utils.get_shape_functions(triangle,3)
         node_check.append(id3)
 
-# calcul de la solution approchée
+# Calcul de la solution approchée
 U = np.linalg.solve(A_csr.toarray(), B.transpose())
 
 def sol(x,y):
@@ -96,21 +96,21 @@ def sol(x,y):
 
 def plot_solution_on_grid(mesh, sol_func, title="Solution sur grille"):
 
-    # Extraire les points du domaine pour l'affiche graphique
+    # Extraction des points du domaine pour l'affichage graphique
     x_coords = [p.x for p in mesh.points]
     y_coords = [p.y for p in mesh.points]
     xmin, xmax = min(x_coords), max(x_coords)
     ymin, ymax = min(y_coords), max(y_coords)
 
-    # Créer une grille régulière
+    # Création d'une grille régulière
     N = 100  # plus grand = plus fin
     X, Y = np.meshgrid(np.linspace(xmin, xmax, N),
                        np.linspace(ymin, ymax, N))
 
-    # Évaluer la solution sur la grille
+    # Évaluation de la solution sur la grille
     Z = np.vectorize(sol_func)(X, Y)
 
-    # Tracer la surface
+    # Traçage de la surface
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none')
