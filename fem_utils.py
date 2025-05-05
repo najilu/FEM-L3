@@ -10,11 +10,11 @@ def get_shape_functions(triangle_principale, i) -> Callable[[float, float], floa
     :param i: le numéro du sommet sur lequel la fonction de forme doit valoir 1
     :return: la fonction de forme conrrespondante.
     """
-    coords = np.array([p.get_coord() for p in triangle_principale.points])  # on récupère les coordonnées des points
-    A = np.hstack((coords, np.ones((3, 1))))  # on initialise une matrice 3x3 de la forrme (coordonnées + 1)
-    rhs = np.zeros(3) # on initialise le second membre à 0
-    rhs[i-1] = 1  # on place à 1 dans le vecteur à la ligne pour laquelle la fonction doit être non nul
-    phi_coeffs = np.linalg.solve(A, rhs)  # Résout le système pour obtenir les coefficients de phi
+    coords = np.array([p.get_coord() for p in triangle_principale.points])  # Récupération des coordonnées des points
+    A = np.hstack((coords, np.ones((3, 1))))  # Initialisation d'une matrice 3x3 de la forme (coordonnées + 1)
+    rhs = np.zeros(3) # Initialisation du second membre à 0
+    rhs[i-1] = 1  # Affectation d'un 1 à la ième coordonnée du vecteur
+    phi_coeffs = np.linalg.solve(A, rhs)  # Résolution du système pour obtenir les coefficients de phi
     def phi_function(x:float,y:float) -> float:
         """
         Fonction de forme qui vaut 1 sur les triangles qui vaut 1 sur le sommet i et 0 sur tout les autres sommets
@@ -22,8 +22,8 @@ def get_shape_functions(triangle_principale, i) -> Callable[[float, float], floa
         :param y: float
         :return: float
         """
-        p = Point(x,y,1) #on transforme les coordonées en un point pour vérifier si il appartient à un triangle dont un des sommets est le sommets i
-        # si c'est le cas alors la fonction vaut une valeur non nul, sinon elle vaut 0
+        p = Point(x,y,1) #Transformation des coordonées en un point pour vérifier si il appartient à un triangle dont un des sommets est le sommets i,
+        # si c'est le cas, alors la fonction vaut une valeur non nulle, sinon elle vaut 0
         if is_point_in_triangle(p, triangle_principale): # a refaire on check pas assez de triangle
             return  phi_coeffs[0] * x + phi_coeffs[1] * y + phi_coeffs[2]
         else:
