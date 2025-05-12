@@ -18,7 +18,7 @@ for triangle in mesh.triangles:
     elementary_mass_matrix = (abs(triangle.area())/12) * np.array([[2,1,1],[1,2,1],[1,1,2]])
     for i in range(3):
         for j in range(3):
-            triplets_A.append(triangle.get_boundary(i).get_id(), triangle.get_boundary(j).get_id(), elementary_mass_matrix[i][j])
+            triplets_A.append(triangle.get_boundary(i).get_id(), triangle.get_boundary(j).get_id(),0* elementary_mass_matrix[i][j])
 
 # Calcul des éléments de masse élémentaire pour la matrice de rigidité
 
